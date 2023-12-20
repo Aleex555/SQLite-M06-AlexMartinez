@@ -63,10 +63,10 @@ public class Main {
                     showCharactersByFaction(conn, rs);
                     break;
                 case 3:
-
+                    showBestAttackerByFaction(conn, rs);
                     break;
                 case 4:
-
+                    showBestDefenderByFaction(conn, rs);
                     break;
                 case 5:
                     System.out.println("Adéu! Fins aviat!");
@@ -119,18 +119,12 @@ public class Main {
     static void showCharactersByFaction(Connection conn, ResultSet rs) {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Faccions disponibles:");
-        try {
-            rs = UtilsSQLite.querySelect(conn, "SELECT * FROM faccions");
-            while (rs.next()) {
-                System.out.println("    " + rs.getInt("id") + ". " + rs.getString("name"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return;
-        }
+        showAvailableFactions(conn, rs);
         System.out.print("Selecciona una facció (introduïr l'id): ");
+
         int factionId = scanner.nextInt();
         scanner.nextLine();
+        System.out.println();
 
         String factionName = getFactionNameById(conn, factionId);
         if (factionName == null) {
@@ -146,6 +140,61 @@ public class Main {
             while (rs.next()) {
                 System.out.println("    " + rs.getString("name") + ", Atac: " + rs.getDouble("atac") + ", Defensa: "
                         + rs.getDouble("defensa"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    static void showBestAttackerByFaction(Connection conn, ResultSet rs) {
+        Scanner scanner = new Scanner(System.in);
+
+        showAvailableFactions(conn, rs);
+        System.out.print("Selecciona una facció (introduïr l'id): ");
+        int factionId = scanner.nextInt();
+        scanner.nextLine();
+        String factionName = getFactionNameById(conn, factionId);
+        if (factionName == null) {
+            System.out.println("Facció no trobada.");
+            return;
+        }
+        try {
+            rs = UtilsSQLite.querySelect(conn,
+                    "SELECT * FROM personatges WHERE idFaccio = " + factionId + " ORDER BY atac DESC LIMIT 1");
+            if (rs.next()) {
+                System.out.println();
+                System.out.println("Millor atacant de la facció '" + factionName + "':");
+                System.out.println("    " + rs.getString("name") + ", Atac: " + rs.getDouble("atac") + ", Defensa: "
+                        + rs.getDouble("defensa"));
+            } else {
+                System.out.println("No hi ha personatges en aquesta facció.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    static void showBestDefenderByFaction(Connection conn, ResultSet rs) {
+        Scanner scanner = new Scanner(System.in);
+        showAvailableFactions(conn, rs);
+        System.out.print("Selecciona una facció (introduïr l'id): ");
+        int factionId = scanner.nextInt();
+        scanner.nextLine();
+        String factionName = getFactionNameById(conn, factionId);
+        if (factionName == null) {
+            System.out.println("Facció no trobada.");
+            return;
+        }
+        try {
+            rs = UtilsSQLite.querySelect(conn,
+                    "SELECT * FROM personatges WHERE idFaccio = " + factionId + " ORDER BY defensa DESC LIMIT 1");
+            if (rs.next()) {
+                System.out.println();
+                System.out.println("Millor defensor de la facció '" + factionName + "':");
+                System.out.println("    " + rs.getString("name") + ", Atac: " + rs.getDouble("atac") + ", Defensa: "
+                        + rs.getDouble("defensa"));
+            } else {
+                System.out.println("No hi ha personatges en aquesta facció.");
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -211,5 +260,17 @@ public class Main {
 
         // Desconnectar
         UtilsSQLite.disconnect(conn);
+    }
+
+    static void showAvailableFactions(Connection conn, ResultSet rs) {
+        System.out.println("Faccions disponibles:");
+        try {
+            rs = UtilsSQLite.querySelect(conn, "SELECT * FROM faccions");
+            while (rs.next()) {
+                System.out.println("    " + rs.getInt("id") + ". " + rs.getString("name"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
